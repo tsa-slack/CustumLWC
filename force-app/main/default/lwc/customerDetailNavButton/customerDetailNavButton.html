@@ -1,0 +1,13 @@
+<template>
+    <template if:true={isMobile}>
+        <lightning-button
+            label="お客様詳細を表示"
+            variant="brand"
+            icon-name="utility:preview"
+            onclick={handleNavigate}
+            class="slds-m-around_small"
+            stretch>
+        </lightning-button>
+    </template>
+</template>
+

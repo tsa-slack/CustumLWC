@@ -1,0 +1,533 @@
+<template>
+    <!-- ローディング -->
+    <template if:true={isLoading}>
+        <div class="slds-align_absolute-center" style="min-height: 60vh;">
+            <div class="slds-text-align_center">
+                <lightning-spinner alternative-text="読み込み中..." size="large"></lightning-spinner>
+                <p class="slds-m-top_medium slds-text-color_weak">お客様情報を取得しています...</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- エラー -->
+    <template if:true={hasError}>
+        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-around_medium" role="alert">
+            <lightning-icon icon-name="utility:error" alternative-text="エラー" variant="inverse" size="small"
+                class="slds-m-right_x-small"></lightning-icon>
+            <span>{errorMessage}</span>
+        </div>
+    </template>
+
+    <!-- メインコンテンツ -->
+    <template if:true={hasData}>
+      <div class={containerClass}>
+
+        <!-- ページヘッダー -->
+        <div class="slds-page-header slds-page-header_record-home">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="standard:contact" size="large"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <div class="slds-page-header__name">
+                                <div class="slds-page-header__name-title">
+                                    <span class="slds-text-body_small">お客様情報</span>
+                                    <h1>
+                                        <span class="slds-page-header__title slds-truncate">{detail.contact.name}</span>
+                                    </h1>
+                                </div>
+                            </div>
+                            <div class="slds-page-header__name-meta slds-m-top_xx-small">
+                                <lightning-badge label={codeLabel} class="slds-m-right_xx-small"></lightning-badge>
+                                <template if:true={detail.contact.okyakusamaKana}>
+                                    <lightning-badge label={detail.contact.okyakusamaKana}
+                                        class="slds-m-right_xx-small slds-badge_inverse"></lightning-badge>
+                                </template>
+                                <template if:true={detail.contact.okyakusamaSobetsu}>
+                                    <lightning-badge label={detail.contact.okyakusamaSobetsu}
+                                        class="badge-sobetsu"></lightning-badge>
+                                </template>
+                                <template if:true={hasDaigaeRank}>
+                                    <lightning-badge label={daigaeRankStars}
+                                        class="slds-m-left_xx-small badge-rank"></lightning-badge>
+                                </template>
+                                <template if:true={hasDaigaeMemoDate}>
+                                    <lightning-badge label={daigaeMemoDateLabel}
+                                        class="slds-m-left_xx-small badge-memo"></lightning-badge>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-page-header__col-actions">
+                    <div class="vehicle-count-box">
+                        <span class="slds-text-heading_large">{vehicleCount}</span>
+                        <span class="slds-text-body_small slds-text-color_weak">台</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slds-p-around_small">
+
+            <!-- ─── お客様基本情報 + メモ 横並び ─── -->
+            <div class="slds-grid slds-gutters_small slds-wrap">
+                <!-- 基本情報（左） -->
+                <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">
+                    <lightning-card title="お客様基本情報" icon-name="standard:contact">
+                        <div class="slds-p-horizontal_small slds-p-bottom_small">
+                            <div class="slds-grid slds-wrap slds-gutters_xx-small">
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>性別</dt><dd>{detail.contact.seibetsu}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>年齢</dt><dd>{detail.contact.nenrei}<span class="unit">歳</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>生年月日</dt><dd>{formattedBirthdate}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>自宅電話</dt><dd><template if:true={detail.contact.phone}><a href={phoneLink}>{detail.contact.phone}</a></template></dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>携帯</dt><dd><template if:true={detail.contact.mobilePhone}><a href={mobilePhoneLink}>{detail.contact.mobilePhone}</a></template></dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>メール</dt><dd><template if:true={detail.contact.email}><a href={emailLink}>{detail.contact.email}</a></template></dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>住所(自宅)</dt><dd>{detail.contact.mailingAddress}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>住所(勤務先)</dt><dd>{detail.contact.otherAddress}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>主担当者</dt><dd>{detail.contact.shutantosha}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>TSAグループ</dt><dd>{detail.contact.tsaGroup}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>ボトル残量</dt><dd>{detail.contact.botoruZanryo}</dd>
+                                    </dl>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                    <dl class="field-item-compact">
+                                        <dt>カードPt</dt><dd>{detail.contact.cardPoint}<span class="unit">pt</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </lightning-card>
+                </div>
+
+                <!-- メモ（右） -->
+                <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
+                    <lightning-card title="メモ" icon-name="standard:note">
+                        <lightning-button-icon
+                            slot="actions"
+                            icon-name="utility:add"
+                            alternative-text="メモを追加"
+                            title="メモを追加"
+                            onclick={handleOpenNewNote}>
+                        </lightning-button-icon>
+                        <div class="slds-p-horizontal_small slds-p-bottom_small">
+                            <template if:true={hasContentNotes}>
+                                <template for:each={contentNoteList} for:item="n">
+                                    <div key={n.id} class="note-item">
+                                        <div class="note-title">{n.title}</div>
+                                        <template if:true={n.bodyPreview}>
+                                            <div class="note-body-preview">{n.bodyPreview}</div>
+                                        </template>
+                                        <div class="note-meta">
+                                            {n.formattedLastModified}
+                                            <template if:true={n.lastModifiedByName}>
+                                                <span> / {n.lastModifiedByName}</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasContentNotes}>
+                                <div class="slds-text-align_center slds-p-around_small">
+                                    <p class="slds-text-body_regular slds-text-color_weak">メモはありません</p>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </div>
+            </div>
+
+            <!-- メモ追加モーダル -->
+            <template if:true={showNewNoteModal}>
+                <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                    title="閉じる" onclick={handleCloseNewNote}>
+                                <lightning-icon icon-name="utility:close" alternative-text="閉じる" size="small">
+                                </lightning-icon>
+                            </button>
+                            <h2 class="slds-modal__title slds-hyphenate">メモを追加</h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium">
+                            <lightning-input
+                                label="タイトル"
+                                value={newNoteTitle}
+                                onchange={handleNoteTitleChange}
+                                required
+                                class="slds-m-bottom_small">
+                            </lightning-input>
+                            <lightning-textarea
+                                label="本文"
+                                value={newNoteBody}
+                                onchange={handleNoteBodyChange}
+                                max-length="10000">
+                            </lightning-textarea>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <button class="slds-button slds-button_neutral" onclick={handleCloseNewNote}
+                                    disabled={isSaving}>キャンセル</button>
+                            <button class="slds-button slds-button_brand" onclick={handleSaveNote}
+                                    disabled={isSaving}>
+                                <template if:true={isSaving}>保存中...</template>
+                                <template if:false={isSaving}>保存</template>
+                            </button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </template>
+
+            <!-- ─── 車両カード（タブ式サブセクション） ─── -->
+            <template for:each={vehicleList} for:item="v">
+                <lightning-card key={v.id} icon-name="custom:custom20" class="slds-m-top_small">
+                    <h2 slot="title">
+                        {v.carName}
+                        <span class="vehicle-plate slds-text-color_weak slds-m-left_x-small">{v.name}</span>
+                    </h2>
+                    <div slot="actions">
+                        <template if:true={v.ssFlg}>
+                            <lightning-badge label="SS" class="slds-m-right_xx-small badge-ss"></lightning-badge>
+                        </template>
+                        <template if:true={v.sharyoSobetsu}>
+                            <lightning-badge label={v.sharyoSobetsu} class="badge-sobetsu"></lightning-badge>
+                        </template>
+                    </div>
+                    <div class="slds-p-horizontal_small">
+                        <lightning-tabset variant="scoped">
+                            <!-- 基本情報タブ -->
+                            <lightning-tab label="基本">
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small tab-content">
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>メーカー</dt><dd>{v.maker}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>型式</dt><dd class="slds-text-font_monospace">{v.katashiki}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>新中区分</dt><dd>{v.shinchuKubun}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>軽区分</dt><dd>{v.keiKubun}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>走行距離</dt><dd>{v.sokoKyori}<span class="unit">km</span></dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>経過年数</dt><dd>{v.keikanensu}<span class="unit">年</span></dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>初度登録</dt><dd>{v.formattedShodoToroku}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>MP名称</dt><dd>{v.mpMeisho}</dd></dl>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+
+                            <!-- 点検タブ -->
+                            <lightning-tab label="点検">
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small tab-content">
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>車検満了日</dt><dd class={v.shakenCssClass}>{v.formattedShakenManryobi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>点検種別</dt><dd>{v.tenkenShubetsu}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>点検予定日</dt><dd>{v.formattedTenkenYoteibi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>誘致ステータス</dt><dd>{v.tenkenYutiStatus}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>残日数</dt><dd class={v.tenkenZanCssClass}>{v.tenkenZanNissu}<span class="unit">日</span></dd></dl>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+
+                            <!-- 査定タブ -->
+                            <lightning-tab label={v.sateiTabLabel}>
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small tab-content">
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>最新査定日</dt><dd>{v.formattedSaisinSateiBi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>査定走行距離</dt><dd>{v.saisinSateiKyori}<span class="unit">km</span></dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>査定金額</dt><dd>{v.formattedSaisinSateiKingaku}<span class="unit">円</span></dd></dl>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+
+                            <!-- 保険タブ（常に表示） -->
+                            <lightning-tab label={v.hokenTabLabel}>
+                                <template if:true={v.hasLinkedHoken}>
+                                    <div class="slds-grid slds-wrap slds-gutters_xx-small tab-content">
+                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                            <dl class="field-item-compact"><dt>保険会社</dt><dd>{v.linkedHoken.kaishaMei}</dd></dl>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                            <dl class="field-item-compact"><dt>証券番号</dt><dd class="slds-text-font_monospace">{v.linkedHoken.shokenBango}</dd></dl>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                            <dl class="field-item-compact"><dt>始期日</dt><dd>{v.linkedHoken.formattedShikibi}</dd></dl>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                            <dl class="field-item-compact"><dt>満期日</dt><dd>{v.linkedHoken.formattedMankibi}</dd></dl>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                            <dl class="field-item-compact"><dt>等級</dt><dd>{v.linkedHoken.tokyu}</dd></dl>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                            <dl class="field-item-compact"><dt>契約区分</dt><dd>{v.linkedHoken.keiyakuKubun}</dd></dl>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template if:false={v.hasLinkedHoken}>
+                                    <div class="slds-text-align_center slds-p-around_small">
+                                        <p class="slds-text-color_weak">この車両に紐づく保険はありません</p>
+                                    </div>
+                                </template>
+                            </lightning-tab>
+
+                            <!-- 割賦タブ -->
+                            <lightning-tab label="割賦">
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small tab-content">
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>元金</dt><dd>{v.formattedKappuGankin}<span class="unit">円</span></dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>回数</dt><dd>{v.kappuKaisu}<span class="unit">回</span></dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>毎月支払額</dt><dd>{v.formattedHeigetsu}<span class="unit">円</span></dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>完済予定日</dt><dd>{v.formattedKappuKansaiYoteibi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>完済区分</dt><dd>{v.kappuKansaiKubun}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>満了まで</dt><dd class={v.kappuManryoCssClass}>{v.kappuManryo}<span class="unit">日</span></dd></dl>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+
+                            <!-- タイヤタブ -->
+                            <lightning-tab label="タイヤ">
+                                <div class="slds-grid slds-wrap slds-gutters_small tab-content">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-box slds-box_x-small tire-season-box">
+                                            <p class="slds-text-title_caps slds-m-bottom_xx-small">☀️ 夏タイヤ <span
+                                                    class="slds-text-body_small slds-text-color_weak">{v.formattedNatsuNyuryoku}</span>
+                                            </p>
+                                            <div class="tire-grid">
+                                                <div class={v.natsuZenHidariClass}>
+                                                    前左<br /><strong>{v.natsuZenHidari}</strong><small>mm</small></div>
+                                                <div class="tire-spacer">🚗</div>
+                                                <div class={v.natsuZenMigiClass}>
+                                                    前右<br /><strong>{v.natsuZenMigi}</strong><small>mm</small></div>
+                                                <div class={v.natsuKoHidariClass}>
+                                                    後左<br /><strong>{v.natsuKoHidari}</strong><small>mm</small></div>
+                                                <div class="tire-spacer"></div>
+                                                <div class={v.natsuKoMigiClass}>
+                                                    後右<br /><strong>{v.natsuKoMigi}</strong><small>mm</small></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <div class="slds-box slds-box_x-small tire-season-box">
+                                            <p class="slds-text-title_caps slds-m-bottom_xx-small">❄️ 冬タイヤ <span
+                                                    class="slds-text-body_small slds-text-color_weak">{v.formattedFuyuNyuryoku}</span>
+                                            </p>
+                                            <div class="tire-grid">
+                                                <div class={v.fuyuZenHidariClass}>
+                                                    前左<br /><strong>{v.fuyuZenHidari}</strong><small>mm</small></div>
+                                                <div class="tire-spacer">🚗</div>
+                                                <div class={v.fuyuZenMigiClass}>
+                                                    前右<br /><strong>{v.fuyuZenMigi}</strong><small>mm</small></div>
+                                                <div class={v.fuyuKoHidariClass}>
+                                                    後左<br /><strong>{v.fuyuKoHidari}</strong><small>mm</small></div>
+                                                <div class="tire-spacer"></div>
+                                                <div class={v.fuyuKoMigiClass}>
+                                                    後右<br /><strong>{v.fuyuKoMigi}</strong><small>mm</small></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+
+                            <!-- TCタブ -->
+                            <lightning-tab label="TC">
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small tab-content">
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>保険加入</dt><dd>{v.tcHokenKanyuUmu}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>保険商品名</dt><dd>{v.tcHokenShohinmei}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>保険満期日</dt><dd>{v.formattedTcHokenMankibi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>契約サービス</dt><dd>{v.tcKeiyakuService}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>契約日</dt><dd>{v.formattedTcKeiyakubi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>契約満了日</dt><dd>{v.formattedTcKeiyakuMankibi}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>料金プラン</dt><dd>{v.tcRyokinPlan}</dd></dl>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                        <dl class="field-item-compact"><dt>通信機器</dt><dd>{v.tcTsushinKiki}</dd></dl>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+                        </lightning-tabset>
+                    </div>
+                </lightning-card>
+            </template>
+
+            <!-- 車両なし -->
+            <template if:false={hasVehicles}>
+                <div class="slds-illustration slds-illustration_small slds-m-top_small">
+                    <div class="slds-text-align_center slds-p-around_medium">
+                        <p class="slds-text-heading_medium slds-text-color_weak" style="font-size:2rem;">🚫</p>
+                        <p class="slds-text-body_regular slds-text-color_weak slds-m-top_x-small">登録車両はありません</p>
+                    </div>
+                </div>
+            </template>
+
+            <!-- 保険（車両未紐づき）・JAF -->
+            <template if:true={hasUnlinkedHokenOrJaf}>
+                <div class="slds-grid slds-gutters_small slds-wrap slds-m-top_small">
+                    <template if:true={hasUnlinkedHoken}>
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                            <lightning-card title="保険情報（車両未紐づき）" icon-name="standard:partner_fund_allocation">
+                                <div class="slds-p-horizontal_small slds-p-bottom_small">
+                                    <template for:each={unlinkedHokenList} for:item="h">
+                                        <div key={h.id} class="slds-border_bottom slds-p-bottom_xx-small slds-m-bottom_xx-small">
+                                            <div class="slds-grid slds-wrap slds-gutters_xx-small">
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>保険会社</dt><dd>{h.kaishaMei}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>証券番号</dt><dd class="slds-text-font_monospace">{h.shokenBango}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>始期日</dt><dd>{h.formattedShikibi}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>満期日</dt><dd>{h.formattedMankibi}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>等級</dt><dd>{h.tokyu}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>契約区分</dt><dd>{h.keiyakuKubun}</dd></dl>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </lightning-card>
+                        </div>
+                    </template>
+                    <template if:true={hasJaf}>
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                            <lightning-card title="JAF情報" icon-name="standard:service_contract">
+                                <div class="slds-p-horizontal_small slds-p-bottom_small">
+                                    <template for:each={detail.jafList} for:item="j">
+                                        <div key={j.id} class="slds-border_bottom slds-p-bottom_xx-small slds-m-bottom_xx-small">
+                                            <div class="slds-grid slds-wrap slds-gutters_xx-small">
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>会員番号</dt><dd class="slds-text-font_monospace">{j.kaiinNumber}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>会員種別</dt><dd>{j.kaiinShubetu}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>入会／継続</dt><dd>{j.nyukaiKeizoku}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>加入年数</dt><dd>{j.year}<span class="unit">年</span></dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>満期日</dt><dd>{j.formattedMankibi}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>現金/ｷｬｯｼｭﾚｽ</dt><dd>{j.nyukinKubun}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>申込種別</dt><dd>{j.mousikomShubetu}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>申込日</dt><dd>{j.formattedMousikomDate}</dd></dl>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-1 slds-p-bottom_xx-small">
+                                                    <dl class="field-item-compact"><dt>申込内容</dt><dd>{j.mousikomNaiyo}</dd></dl>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </lightning-card>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+        </div>
+      </div>
+    </template>
+</template>

@@ -1,0 +1,283 @@
+/* ─── customerDetail SLDS 2 Compact Styles ─── */
+
+/* lightning-card タイトルサイズ */
+:host {
+  --sds-c-card-heading-font-size: 1.1rem;
+  --sds-c-badge-font-size: 0.875rem;
+}
+
+/* ページヘッダーのバッジ */
+.slds-page-header__name-meta lightning-badge {
+  font-size: 0.875rem;
+}
+
+/* 車両カードの登録ナンバー */
+.vehicle-plate {
+  font-size: 1rem;
+}
+
+/* ─── コンパクトフィールド表示 ─── */
+.field-item-compact {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  line-height: 1.4;
+}
+.field-item-compact dt {
+  margin-bottom: 0;
+  font-size: 0.75rem;
+  min-width: 4.5rem;
+  flex-shrink: 0;
+  color: var(--slds-g-color-neutral-base-30, #666);
+}
+.field-item-compact dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.unit {
+  font-size: 0.75rem;
+  color: var(--slds-g-color-neutral-base-50, #999);
+  margin-left: 1px;
+}
+
+/* 旧field-item (互換性) */
+.field-item {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.field-item dt {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  min-width: 6rem;
+  flex-shrink: 0;
+  color: var(--slds-g-color-neutral-base-30, #666);
+}
+.field-item dd {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+/* サブセクションヘッダー */
+.subsection-header {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--slds-g-color-neutral-base-30, #444);
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+  margin-top: 0.5rem;
+}
+
+/* タブ内のコンテンツパディング */
+.tab-content {
+  padding: 0.25rem 0;
+}
+
+/* 車両台数バッジ + ヘッダーアクション */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vehicle-count-box {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+/* バッジカスタム */
+.badge-ss {
+  --sds-c-badge-color-background: #e3165b;
+  --sds-c-badge-text-color: #fff;
+}
+.badge-sobetsu {
+  --sds-c-badge-color-background: #0176d3;
+  --sds-c-badge-text-color: #fff;
+}
+.badge-rank {
+  --sds-c-badge-color-background: #f9a825;
+  --sds-c-badge-text-color: #fff;
+  letter-spacing: 2px;
+}
+.badge-memo {
+  --sds-c-badge-color-background: #2e844a;
+  --sds-c-badge-text-color: #fff;
+}
+
+/* ステータス色 (残日数/車検等) */
+.val--danger {
+  color: #ea001e;
+  font-weight: 700;
+}
+.val--warning {
+  color: #fe9339;
+  font-weight: 700;
+}
+.val--caution {
+  color: #e8b600;
+  font-weight: 600;
+}
+.val--ok {
+  color: #2e844a;
+}
+
+/* タイヤグリッド */
+.tire-season-box {
+  background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+.tire-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 4px;
+  max-width: 260px;
+  margin: 0 auto;
+}
+.tire-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--slds-g-color-neutral-base-30, #666);
+}
+.tire-spacer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  font-size: 1.2rem;
+}
+.tire-cell {
+  text-align: center;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+.tire-cell--ok {
+  text-align: center;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  background: #e6f7e9;
+  color: #2e844a;
+}
+.tire-cell--warning {
+  text-align: center;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  background: #fef0e4;
+  color: #a96404;
+}
+.tire-cell--danger {
+  text-align: center;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  background: #fce4e4;
+  color: #ea001e;
+  font-weight: 700;
+}
+.tire-cell--none {
+  text-align: center;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  background: var(--slds-g-color-neutral-base-90, #e5e5e5);
+  color: var(--slds-g-color-neutral-base-50, #999);
+}
+
+/* ─── ContentNote（メモ）─── */
+.note-item {
+  padding: 0.375rem 0;
+  border-bottom: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+}
+.note-item:last-child {
+  border-bottom: none;
+}
+.note-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--slds-g-color-neutral-base-10, #181818);
+}
+.note-body-preview {
+  font-size: 0.8125rem;
+  color: var(--slds-g-color-neutral-base-40, #888);
+  margin-top: 0.125rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.note-meta {
+  font-size: 0.6875rem;
+  color: var(--slds-g-color-neutral-base-50, #999);
+  margin-top: 0.125rem;
+}
+
+/* ─── モバイル対応（FORM_FACTOR=Small） ─── */
+/* .mobile クラスは JS の FORM_FACTOR で付与 */
+.mobile .slds-size_1-of-2 {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex-basis: 100% !important;
+}
+.mobile .field-item-compact {
+  flex-direction: column;
+  gap: 0;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.mobile .field-item-compact dt {
+  font-size: 0.6875rem;
+  min-width: unset;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.mobile .field-item-compact dd {
+  font-size: 1rem;
+}
+.mobile .tab-content {
+  padding: 0.375rem 0;
+}
+.mobile .tire-season-box {
+  margin-bottom: 0.5rem;
+}
+.mobile .tire-grid {
+  max-width: 220px;
+}
+.mobile .note-title {
+  font-size: 0.8125rem;
+}
+.mobile .note-body-preview {
+  font-size: 0.75rem;
+}
+
+/* @media フォールバック（ブラウザ プレビュー用） */
+@media (max-width: 480px) {
+  .slds-size_1-of-2 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-basis: 100% !important;
+  }
+  .field-item-compact {
+    flex-direction: column;
+    gap: 0;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .field-item-compact dt {
+    font-size: 0.6875rem;
+    min-width: unset;
+  }
+  .field-item-compact dd {
+    font-size: 1rem;
+  }
+}
