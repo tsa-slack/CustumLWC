@@ -96,12 +96,12 @@
                                 </div>
                                 <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
                                     <dl class="field-item-compact">
-                                        <dt>自宅電話</dt><dd><template if:true={detail.contact.phone}><a href={phoneLink}>{detail.contact.phone}</a></template></dd>
+                                        <dt>自宅電話</dt><dd><template if:true={detail.contact.phone}><a href={phoneLink} data-phone={detail.contact.phone} onclick={handlePhoneCall}>{detail.contact.phone}</a></template></dd>
                                     </dl>
                                 </div>
                                 <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
                                     <dl class="field-item-compact">
-                                        <dt>携帯</dt><dd><template if:true={detail.contact.mobilePhone}><a href={mobilePhoneLink}>{detail.contact.mobilePhone}</a></template></dd>
+                                        <dt>携帯</dt><dd><template if:true={detail.contact.mobilePhone}><a href={mobilePhoneLink} data-phone={detail.contact.mobilePhone} onclick={handlePhoneCall}>{detail.contact.mobilePhone}</a></template></dd>
                                     </dl>
                                 </div>
                                 <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
@@ -144,9 +144,9 @@
                     </lightning-card>
                 </div>
 
-                <!-- メモ（右） -->
+                <!-- メモ・発信履歴（右） -->
                 <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12">
-                    <lightning-card title="メモ" icon-name="standard:note">
+                    <lightning-card title="メモ / 発信" icon-name="standard:note">
                         <lightning-button-icon
                             slot="actions"
                             icon-name="utility:add"
@@ -155,27 +155,57 @@
                             onclick={handleOpenNewNote}>
                         </lightning-button-icon>
                         <div class="slds-p-horizontal_small slds-p-bottom_small">
-                            <template if:true={hasContentNotes}>
-                                <template for:each={contentNoteList} for:item="n">
-                                    <div key={n.id} class="note-item">
-                                        <div class="note-title">{n.title}</div>
-                                        <template if:true={n.bodyPreview}>
-                                            <div class="note-body-preview">{n.bodyPreview}</div>
+                            <lightning-tabset>
+                                <!-- メモタブ -->
+                                <lightning-tab label="メモ">
+                                    <template if:true={hasContentNotes}>
+                                        <template for:each={contentNoteList} for:item="n">
+                                            <div key={n.id} class="note-item">
+                                                <div class="note-title">{n.title}</div>
+                                                <template if:true={n.bodyPreview}>
+                                                    <div class="note-body-preview">{n.bodyPreview}</div>
+                                                </template>
+                                                <div class="note-meta">
+                                                    {n.formattedLastModified}
+                                                    <template if:true={n.lastModifiedByName}>
+                                                        <span> / {n.lastModifiedByName}</span>
+                                                    </template>
+                                                </div>
+                                            </div>
                                         </template>
-                                        <div class="note-meta">
-                                            {n.formattedLastModified}
-                                            <template if:true={n.lastModifiedByName}>
-                                                <span> / {n.lastModifiedByName}</span>
-                                            </template>
+                                    </template>
+                                    <template if:false={hasContentNotes}>
+                                        <div class="slds-text-align_center slds-p-around_small">
+                                            <p class="slds-text-body_regular slds-text-color_weak">メモはありません</p>
                                         </div>
-                                    </div>
-                                </template>
-                            </template>
-                            <template if:false={hasContentNotes}>
-                                <div class="slds-text-align_center slds-p-around_small">
-                                    <p class="slds-text-body_regular slds-text-color_weak">メモはありません</p>
-                                </div>
-                            </template>
+                                    </template>
+                                </lightning-tab>
+
+                                <!-- 発信履歴タブ -->
+                                <lightning-tab label={callTaskTabLabel}>
+                                    <template if:true={hasCallTasks}>
+                                        <template for:each={callTasks} for:item="ct">
+                                            <div key={ct.id} class="note-item">
+                                                <div class="note-title">{ct.subject}</div>
+                                                <template if:true={ct.description}>
+                                                    <div class="note-body-preview">{ct.description}</div>
+                                                </template>
+                                                <div class="note-meta">
+                                                    {ct.formattedCreatedDate}
+                                                    <template if:true={ct.createdByName}>
+                                                        <span> / {ct.createdByName}</span>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={hasCallTasks}>
+                                        <div class="slds-text-align_center slds-p-around_small">
+                                            <p class="slds-text-body_regular slds-text-color_weak">発信履歴はありません</p>
+                                        </div>
+                                    </template>
+                                </lightning-tab>
+                            </lightning-tabset>
                         </div>
                     </lightning-card>
                 </div>
@@ -529,5 +559,34 @@
 
         </div>
       </div>
+    </template>
+
+    <!-- 電話発信メモモーダル -->
+    <template if:true={showCallMemoModal}>
+        <section class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={handleCloseCallMemo}>
+                        <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title slds-hyphenate">📞 通話メモ</h2>
+                    <p class="slds-m-top_x-small slds-text-color_weak">{_pendingCallPhone} への発信</p>
+                </div>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-textarea
+                        label="会話メモ"
+                        value={callMemo}
+                        onchange={handleCallMemoChange}
+                        placeholder="通話内容を入力..."
+                        max-length="32000">
+                    </lightning-textarea>
+                </div>
+                <div class="slds-modal__footer">
+                    <lightning-button label="メモなしで閉じる" onclick={handleCloseCallMemo}></lightning-button>
+                    <lightning-button label="メモを保存" variant="brand" onclick={handleSaveCallMemo} disabled={isSaving} class="slds-m-left_x-small"></lightning-button>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
     </template>
 </template>

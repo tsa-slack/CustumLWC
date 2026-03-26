@@ -12,6 +12,8 @@ public with sharing class CustomerDetailCtrl {
     @AuraEnabled
     public List<ContentNoteWrapper> contentNotes { get; set; }
     @AuraEnabled
+    public List<CallTaskWrapper> callTaskList { get; set; }
+    @AuraEnabled
     public Decimal daigaeScore { get; set; }
     @AuraEnabled
     public Integer daigaeRank { get; set; }
@@ -31,6 +33,20 @@ public with sharing class CustomerDetailCtrl {
     public Datetime lastModifiedDate { get; set; }
     @AuraEnabled
     public String lastModifiedByName { get; set; }
+  }
+
+  // ─── CallTask ────────────────────────────────────────────
+  public class CallTaskWrapper {
+    @AuraEnabled
+    public String id { get; set; }
+    @AuraEnabled
+    public String subject { get; set; }
+    @AuraEnabled
+    public String description { get; set; }
+    @AuraEnabled
+    public Datetime createdDate { get; set; }
+    @AuraEnabled
+    public String createdByName { get; set; }
   }
 
   // ─── Contact ─────────────────────────────────────────────
@@ -525,6 +541,26 @@ public with sharing class CustomerDetailCtrl {
       }
     }
 
+    // ─── 電話発信履歴（最新10件）───────────────────────────
+    result.callTaskList = new List<CallTaskWrapper>();
+    for (Task ct : [
+      SELECT Id, Subject, Description, CreatedDate, CreatedBy.Name
+      FROM Task
+      WHERE WhoId = :contactId
+        AND TaskSubtype = 'Call'
+        AND CallType = 'Outbound'
+      ORDER BY CreatedDate DESC
+      LIMIT 3
+    ]) {
+      CallTaskWrapper ctw = new CallTaskWrapper();
+      ctw.id = ct.Id;
+      ctw.subject = ct.Subject;
+      ctw.description = ct.Description;
+      ctw.createdDate = ct.CreatedDate;
+      ctw.createdByName = ct.CreatedBy.Name;
+      result.callTaskList.add(ctw);
+    }
+
     return result;
   }
 
@@ -590,5 +626,28 @@ public with sharing class CustomerDetailCtrl {
     insert cdl;
 
     return note.Id;
+  }
+
+  // ─── 電話発信: Task作成 ──────────────────────────────────────
+  @AuraEnabled
+  public static Id createCallTask(String contactId, String phoneNumber) {
+    Task t = new Task(
+      WhoId = contactId,
+      Subject = '電話発信: ' + phoneNumber,
+      Status = 'Completed',
+      Priority = 'Normal',
+      TaskSubtype = 'Call',
+      CallType = 'Outbound',
+      ActivityDate = Date.today()
+    );
+    insert t;
+    return t.Id;
+  }
+
+  // ─── 電話発信: メモ更新 ──────────────────────────────────────
+  @AuraEnabled
+  public static void updateCallMemo(String taskId, String memo) {
+    Task t = new Task(Id = taskId, Description = memo);
+    update t;
   }
 }

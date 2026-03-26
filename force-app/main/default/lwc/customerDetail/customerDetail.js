@@ -5,6 +5,8 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import FORM_FACTOR from "@salesforce/client/formFactor";
 import getCustomerDetail from "@salesforce/apex/CustomerDetailCtrl.getCustomerDetail";
 import createNote from "@salesforce/apex/CustomerDetailCtrl.createNote";
+import createCallTask from "@salesforce/apex/CustomerDetailCtrl.createCallTask";
+import updateCallMemo from "@salesforce/apex/CustomerDetailCtrl.updateCallMemo";
 
 // 日付フォーマット（YYYY/MM/DD）
 function formatDate(dateStr) {
@@ -71,6 +73,13 @@ export default class CustomerDetail extends LightningElement {
   @track newNoteBody = "";
   @track isSaving = false;
 
+  // 電話発信メモモーダル用
+  @track showCallMemoModal = false;
+  @track callMemo = "";
+  @track _pendingCallTaskId = null;
+  @track _pendingCallPhone = "";
+  _boundVisibilityHandler = null;
+
   // モバイル判定
   get containerClass() {
     return FORM_FACTOR === "Small" ? "mobile" : "";
@@ -97,6 +106,86 @@ export default class CustomerDetail extends LightningElement {
       this._contactId = cid;
       this.loadData();
     }
+  }
+
+  connectedCallback() {
+    this._boundVisibilityHandler = () => this._handleVisibilityChange();
+    document.addEventListener("visibilitychange", this._boundVisibilityHandler);
+  }
+
+  disconnectedCallback() {
+    if (this._boundVisibilityHandler) {
+      document.removeEventListener("visibilitychange", this._boundVisibilityHandler);
+    }
+  }
+
+  _handleVisibilityChange() {
+    if (document.visibilityState === "visible" && this._pendingCallTaskId) {
+      // 電話アプリから戻ってきた → メモモーダル表示
+      this.showCallMemoModal = true;
+    }
+  }
+
+  handlePhoneCall(event) {
+    // tel: リンクはそのまま動作させる（preventDefault しない）
+    const phone = event.currentTarget.dataset.phone;
+    if (!phone || !this._contactId) return;
+
+    // Task を非同期で作成（電話起動をブロックしない）
+    createCallTask({
+      contactId: this._contactId,
+      phoneNumber: phone
+    })
+      .then((taskId) => {
+        this._pendingCallTaskId = taskId;
+        this._pendingCallPhone = phone;
+      })
+      .catch((e) => {
+        console.error("Failed to create call task", e);
+      });
+  }
+
+  async handleSaveCallMemo() {
+    if (!this._pendingCallTaskId) return;
+    this.isSaving = true;
+    try {
+      await updateCallMemo({
+        taskId: this._pendingCallTaskId,
+        memo: this.callMemo
+      });
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "保存完了",
+          message: this._pendingCallPhone + " への発信メモを保存しました",
+          variant: "success"
+        })
+      );
+    } catch (e) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "エラー",
+          message: "メモ保存に失敗しました: " + (e.body?.message || e.message),
+          variant: "error"
+        })
+      );
+    } finally {
+      this.isSaving = false;
+      this._pendingCallTaskId = null;
+      this._pendingCallPhone = "";
+      this.callMemo = "";
+      this.showCallMemoModal = false;
+    }
+  }
+
+  handleCloseCallMemo() {
+    this._pendingCallTaskId = null;
+    this._pendingCallPhone = "";
+    this.callMemo = "";
+    this.showCallMemoModal = false;
+  }
+
+  handleCallMemoChange(event) {
+    this.callMemo = event.target.value;
   }
 
   async loadData() {
@@ -158,6 +247,12 @@ export default class CustomerDetail extends LightningElement {
       formattedLastModified: formatDatetime(n.lastModifiedDate)
     }));
 
+    // CallTask
+    const callTaskList = (raw.callTaskList || []).map((ct) => ({
+      ...ct,
+      formattedCreatedDate: formatDatetime(ct.createdDate)
+    }));
+
     // 車両
     const vehicleList = (raw.sharyoList || []).map((v) => {
       const linkedHoken = hokenBySharyoId[v.id] || null;
@@ -212,6 +307,7 @@ export default class CustomerDetail extends LightningElement {
       vehicleList,
       jafList,
       contentNotes,
+      callTaskList,
       unlinkedHokenList: unlinked,
       daigaeScore: raw.daigaeScore,
       daigaeRank: raw.daigaeRank,
@@ -292,6 +388,16 @@ export default class CustomerDetail extends LightningElement {
   }
   get hasContentNotes() {
     return this.contentNoteList.length > 0;
+  }
+  get callTasks() {
+    return this.detail?.callTaskList || [];
+  }
+  get hasCallTasks() {
+    return this.callTasks.length > 0;
+  }
+  get callTaskTabLabel() {
+    const count = this.callTasks.length;
+    return count > 0 ? `発信履歴 (${count})` : "発信履歴";
   }
   get isNewNoteValid() {
     return this.newNoteTitle && this.newNoteTitle.trim().length > 0;

@@ -453,4 +453,57 @@ private class CustomerDetailCtrlTest {
       'should have max 3 notes'
     );
   }
+
+  // ─── 電話発信: Task作成テスト ──────────────────────────────────
+  @IsTest
+  static void testCreateCallTask() {
+    Contact con = [
+      SELECT Id
+      FROM Contact
+      WHERE Okyakusamacode__c = 'TEST001'
+      LIMIT 1
+    ];
+
+    Test.startTest();
+    Id taskId = CustomerDetailCtrl.createCallTask(con.Id, '090-1234-5678');
+    Test.stopTest();
+
+    System.assertNotEquals(null, taskId, 'taskId should not be null');
+
+    Task t = [
+      SELECT Subject, Status, TaskSubtype, CallType, WhoId, ActivityDate
+      FROM Task
+      WHERE Id = :taskId
+    ];
+    System.assertEquals('電話発信: 090-1234-5678', t.Subject, 'subject mismatch');
+    System.assertEquals('Completed', t.Status, 'status should be Completed');
+    System.assertEquals('Call', t.TaskSubtype, 'subtype should be Call');
+    System.assertEquals('Outbound', t.CallType, 'callType should be Outbound');
+    System.assertEquals(con.Id, t.WhoId, 'whoId should match contact');
+    System.assertEquals(Date.today(), t.ActivityDate, 'activityDate should be today');
+  }
+
+  // ─── 電話発信: メモ更新テスト ─────────────────────────────────
+  @IsTest
+  static void testUpdateCallMemo() {
+    Contact con = [
+      SELECT Id
+      FROM Contact
+      WHERE Okyakusamacode__c = 'TEST001'
+      LIMIT 1
+    ];
+
+    Id taskId = CustomerDetailCtrl.createCallTask(con.Id, '03-1234-5678');
+
+    Test.startTest();
+    CustomerDetailCtrl.updateCallMemo(taskId, '折り返し希望。明日午前中に再度連絡。');
+    Test.stopTest();
+
+    Task t = [SELECT Description FROM Task WHERE Id = :taskId];
+    System.assertEquals(
+      '折り返し希望。明日午前中に再度連絡。',
+      t.Description,
+      'memo should be updated'
+    );
+  }
 }

@@ -202,12 +202,12 @@
   border-bottom: none;
 }
 .note-title {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--slds-g-color-neutral-base-10, #181818);
 }
 .note-body-preview {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--slds-g-color-neutral-base-40, #888);
   margin-top: 0.125rem;
   display: -webkit-box;
@@ -254,10 +254,10 @@
   max-width: 220px;
 }
 .mobile .note-title {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
 }
 .mobile .note-body-preview {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
 }
 
 /* @media フォールバック（ブラウザ プレビュー用） */
