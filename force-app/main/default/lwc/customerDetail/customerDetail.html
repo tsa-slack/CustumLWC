@@ -557,6 +557,79 @@
                 </div>
             </template>
 
+            <!-- au携帯契約（契約者別タブ） -->
+            <template if:true={hasAuList}>
+                <div class="slds-m-top_small">
+                    <lightning-card title="au携帯契約" icon-name="standard:phone_landscape">
+                        <div class="slds-p-horizontal_small slds-p-bottom_small">
+                            <lightning-tabset>
+                                <template for:each={auTabs} for:item="tab">
+                                    <lightning-tab key={tab.key} label={tab.label}>
+                                        <template if:true={tab.hasRecords}>
+                                            <template for:each={tab.records} for:item="au">
+                                                <div key={au.id} class="slds-p-bottom_x-small">
+                                                    <div class="slds-text-title_bold slds-p-bottom_xx-small">{au.kishuMeisho}
+                                                        <template if:true={au.keiyakuShubetsu}>
+                                                            <lightning-badge label={au.keiyakuShubetsu} class="slds-m-left_xx-small"></lightning-badge>
+                                                        </template>
+                                                    </div>
+                                                    <div class="slds-grid slds-wrap slds-gutters_xx-small">
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>携帯番号</dt><dd>{au.auTel}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>機種分類</dt><dd>{au.kishu}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>料金プラン</dt><dd>{au.ryokinPlan}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>端末購入日</dt><dd>{au.formattedKonyubi}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>利用月数</dt><dd>{au.tanmatsuRiyou}<span class="unit">ヶ月</span></dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>割賦支払額</dt><dd>{au.formattedKappuGaku}<span class="unit">円</span></dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>割賦回数</dt><dd>{au.keitaiKappuShiharaiKaisuu}<span class="unit">回</span></dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>割賦終了予定</dt><dd>{au.keitaiKappuShuryoYotei}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>残債金額</dt><dd>{au.formattedZansai}<span class="unit">円</span></dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>契約更新</dt><dd>{au.keiyakuKoshinbiFrom} ~ {au.keiyakuKoshinbiTo}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>UGPプログラム</dt><dd>{au.ugpMeisho}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>UGP更新</dt><dd>{au.ugpFrom} ~ {au.ugpTo}</dd></dl>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-3 slds-p-bottom_xx-small">
+                                                            <dl class="field-item-compact"><dt>メンバーズ加入日</dt><dd>{au.membersTorokubiText}</dd></dl>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </template>
+                                        <template if:false={tab.hasRecords}>
+                                            <div class="slds-text-align_center slds-p-around_small">
+                                                <p class="slds-text-body_regular slds-text-color_weak">データなし</p>
+                                            </div>
+                                        </template>
+                                    </lightning-tab>
+                                </template>
+                            </lightning-tabset>
+                        </div>
+                    </lightning-card>
+                </div>
+            </template>
+
         </div>
       </div>
     </template>

@@ -14,6 +14,8 @@ public with sharing class CustomerDetailCtrl {
     @AuraEnabled
     public List<CallTaskWrapper> callTaskList { get; set; }
     @AuraEnabled
+    public List<AuWrapper> auList { get; set; }
+    @AuraEnabled
     public Decimal daigaeScore { get; set; }
     @AuraEnabled
     public Integer daigaeRank { get; set; }
@@ -47,6 +49,48 @@ public with sharing class CustomerDetailCtrl {
     public Datetime createdDate { get; set; }
     @AuraEnabled
     public String createdByName { get; set; }
+  }
+
+  // ─── au携帯契約 ────────────────────────────────────────
+  public class AuWrapper {
+    @AuraEnabled
+    public String id { get; set; }
+    @AuraEnabled
+    public String auTel { get; set; }
+    @AuraEnabled
+    public String kishuMeisho { get; set; }
+    @AuraEnabled
+    public String kishu { get; set; }
+    @AuraEnabled
+    public String ryokinPlan { get; set; }
+    @AuraEnabled
+    public String keiyakuShubetsu { get; set; }
+    @AuraEnabled
+    public Date keitaiKonyubi { get; set; }
+    @AuraEnabled
+    public Decimal tanmatsuRiyou { get; set; }
+    @AuraEnabled
+    public Decimal keitaiKappuShiharaiGaku { get; set; }
+    @AuraEnabled
+    public Decimal keitaiKappuShiharaiKaisuu { get; set; }
+    @AuraEnabled
+    public String keitaiKappuShuryoYotei { get; set; }
+    @AuraEnabled
+    public Decimal keitaiZansaiKingaku { get; set; }
+    @AuraEnabled
+    public String keiyakushaMei { get; set; }
+    @AuraEnabled
+    public String keiyakuKoshinbiFrom { get; set; }
+    @AuraEnabled
+    public String keiyakuKoshinbiTo { get; set; }
+    @AuraEnabled
+    public String ugpFrom { get; set; }
+    @AuraEnabled
+    public String ugpTo { get; set; }
+    @AuraEnabled
+    public String ugpMeisho { get; set; }
+    @AuraEnabled
+    public String membersTorokubiText { get; set; }
   }
 
   // ─── Contact ─────────────────────────────────────────────
@@ -561,7 +605,86 @@ public with sharing class CustomerDetailCtrl {
       result.callTaskList.add(ctw);
     }
 
+    // ─── au携帯契約（重複除外・本人優先）──────────────────────
+    Map<String, AuWrapper> honninAuMap = new Map<String, AuWrapper>();
+    Map<String, AuWrapper> kazokuAuMap = new Map<String, AuWrapper>();
+    List<String> honninKeyOrder = new List<String>();
+    List<String> kazokuKeyOrder = new List<String>();
+    String contactName = con.Name;
+    for (au__c a : [
+      SELECT Id, AuTel__c, KishuMeisho__c, Kishu__c,
+             RyokinPlanMeisho__c, KeiyakuNoShubetsu__c,
+             KeitaiKonyubi__c, TanmatuRiyou__c,
+             KeitaiKappuShiharaiGaku__c, KeitaiKappuShiharaiKaisuu__c,
+             KeitaiKappuShuryoYoteizuki_Text__c, KeitaiZansaiKingaku__c,
+             KeiyakushameiKanji__c,
+             KeiyakuKoshinbiFrom__c, KeiyakuKoshinbiTo__c,
+             UGPKenriKoshiKanoNengetsuFrom__c, UGPKenriKoshiKanoNengetsuTo__c,
+             UpGradeProgramMeisho__c,
+             ToyotaAuMembersTorokubi_Text__c
+      FROM au__c
+      WHERE ContactName__c = :contactId
+      ORDER BY KeitaiKonyubi__c DESC NULLS LAST
+    ]) {
+      // 重複判定：携帯番号+端末購入日+機種名称+契約者
+      String dedupeKey = (a.AuTel__c != null ? a.AuTel__c : '') + '|'
+        + String.valueOf(a.KeitaiKonyubi__c) + '|'
+        + (a.KishuMeisho__c != null ? a.KishuMeisho__c : '') + '|'
+        + (a.KeiyakushameiKanji__c != null ? a.KeiyakushameiKanji__c : '');
+
+      Boolean isHonnin = (contactName != null && a.KeiyakushameiKanji__c == contactName);
+      Map<String, AuWrapper> targetMap = isHonnin ? honninAuMap : kazokuAuMap;
+      List<String> targetOrder = isHonnin ? honninKeyOrder : kazokuKeyOrder;
+
+      if (targetMap.containsKey(dedupeKey)) {
+        // 重複 → メンバーズ加入日が新しければ上書き
+        AuWrapper existing = targetMap.get(dedupeKey);
+        String existDate = existing.membersTorokubiText != null ? existing.membersTorokubiText : '';
+        String newDate = a.ToyotaAuMembersTorokubi_Text__c != null ? a.ToyotaAuMembersTorokubi_Text__c : '';
+        if (newDate > existDate) {
+          AuWrapper aw = buildAuWrapper(a);
+          targetMap.put(dedupeKey, aw);
+        }
+        continue;
+      }
+
+      targetMap.put(dedupeKey, buildAuWrapper(a));
+      targetOrder.add(dedupeKey);
+    }
+    // 本人を先頭に結合（挿入順を維持）
+    result.auList = new List<AuWrapper>();
+    for (String k : honninKeyOrder) {
+      result.auList.add(honninAuMap.get(k));
+    }
+    for (String k : kazokuKeyOrder) {
+      result.auList.add(kazokuAuMap.get(k));
+    }
+
     return result;
+  }
+  // ─── au__c → AuWrapper 変換ヘルパー ─────────────────────────
+  private static AuWrapper buildAuWrapper(au__c a) {
+    AuWrapper aw = new AuWrapper();
+    aw.id = a.Id;
+    aw.auTel = a.AuTel__c;
+    aw.kishuMeisho = a.KishuMeisho__c;
+    aw.kishu = a.Kishu__c;
+    aw.ryokinPlan = a.RyokinPlanMeisho__c;
+    aw.keiyakuShubetsu = a.KeiyakuNoShubetsu__c;
+    aw.keitaiKonyubi = a.KeitaiKonyubi__c;
+    aw.tanmatsuRiyou = a.TanmatuRiyou__c;
+    aw.keitaiKappuShiharaiGaku = a.KeitaiKappuShiharaiGaku__c;
+    aw.keitaiKappuShiharaiKaisuu = a.KeitaiKappuShiharaiKaisuu__c;
+    aw.keitaiKappuShuryoYotei = a.KeitaiKappuShuryoYoteizuki_Text__c;
+    aw.keitaiZansaiKingaku = a.KeitaiZansaiKingaku__c;
+    aw.keiyakushaMei = a.KeiyakushameiKanji__c;
+    aw.keiyakuKoshinbiFrom = a.KeiyakuKoshinbiFrom__c;
+    aw.keiyakuKoshinbiTo = a.KeiyakuKoshinbiTo__c;
+    aw.ugpFrom = a.UGPKenriKoshiKanoNengetsuFrom__c;
+    aw.ugpTo = a.UGPKenriKoshiKanoNengetsuTo__c;
+    aw.ugpMeisho = a.UpGradeProgramMeisho__c;
+    aw.membersTorokubiText = a.ToyotaAuMembersTorokubi_Text__c;
+    return aw;
   }
 
   // ─── ユーティリティ ───────────────────────────────────────

@@ -253,6 +253,14 @@ export default class CustomerDetail extends LightningElement {
       formattedCreatedDate: formatDatetime(ct.createdDate)
     }));
 
+    // au携帯契約
+    const auList = (raw.auList || []).map((a) => ({
+      ...a,
+      formattedKonyubi: formatDate(a.keitaiKonyubi),
+      formattedKappuGaku: formatNum(a.keitaiKappuShiharaiGaku),
+      formattedZansai: formatNum(a.keitaiZansaiKingaku)
+    }));
+
     // 車両
     const vehicleList = (raw.sharyoList || []).map((v) => {
       const linkedHoken = hokenBySharyoId[v.id] || null;
@@ -308,6 +316,7 @@ export default class CustomerDetail extends LightningElement {
       jafList,
       contentNotes,
       callTaskList,
+      auList,
       unlinkedHokenList: unlinked,
       daigaeScore: raw.daigaeScore,
       daigaeRank: raw.daigaeRank,
@@ -398,6 +407,32 @@ export default class CustomerDetail extends LightningElement {
   get callTaskTabLabel() {
     const count = this.callTasks.length;
     return count > 0 ? `発信履歴 (${count})` : "発信履歴";
+  }
+  get auContracts() {
+    return this.detail?.auList || [];
+  }
+  get hasAuList() {
+    return this.auContracts.length > 0;
+  }
+  get auTabs() {
+    const honninRecords = [];
+    const riyoushaRecords = [];
+    const kazokuRecords = [];
+    for (const au of this.auContracts) {
+      const shubetsu = au.keiyakuShubetsu || "";
+      if (shubetsu.includes("本人")) {
+        honninRecords.push(au);
+      } else if (shubetsu.includes("利用者")) {
+        riyoushaRecords.push(au);
+      } else {
+        kazokuRecords.push(au);
+      }
+    }
+    return [
+      { label: "本人", key: "honnin", records: honninRecords, hasRecords: honninRecords.length > 0 },
+      { label: "利用者", key: "riyousha", records: riyoushaRecords, hasRecords: riyoushaRecords.length > 0 },
+      { label: "家族", key: "kazoku", records: kazokuRecords, hasRecords: kazokuRecords.length > 0 }
+    ];
   }
   get isNewNoteValid() {
     return this.newNoteTitle && this.newNoteTitle.trim().length > 0;

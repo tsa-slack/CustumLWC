@@ -85,6 +85,22 @@ private class CustomerDetailCtrlTest {
       JyuchuStatus__c = 'B'
     );
     insert daigae3;
+
+    // au携帯契約
+    au__c auRec = new au__c(
+      ContactName__c = con.Id,
+      GaibuKey__c = 'AU-TEST-001',
+      AuTel__c = '090-9999-8888',
+      KishuMeisho__c = 'iPhone 15',
+      Kishu__c = 'スマートフォン',
+      RyokinPlanMeisho__c = '使い放題MAX',
+      KeiyakuNoShubetsu__c = '新規',
+      KeitaiKappuShiharaiGaku__c = 3000,
+      KeitaiKappuShiharaiKaisuu__c = 24,
+      KeitaiZansaiKingaku__c = 36000,
+      KeiyakushameiKanji__c = 'テスト太郎'
+    );
+    insert auRec;
   }
 
   // ─── 正常系：全データ取得 ──────────────────────────────────
@@ -505,5 +521,34 @@ private class CustomerDetailCtrlTest {
       t.Description,
       'memo should be updated'
     );
+  }
+
+  // ─── au携帯契約: 取得テスト ──────────────────────────────────
+  @IsTest
+  static void testAuList() {
+    Contact con = [
+      SELECT Id
+      FROM Contact
+      WHERE Okyakusamacode__c = 'TEST001'
+      LIMIT 1
+    ];
+
+    Test.startTest();
+    CustomerDetailCtrl.CustomerDetailWrapper result = CustomerDetailCtrl.getCustomerDetail(
+      con.Id
+    );
+    Test.stopTest();
+
+    System.assertEquals(1, result.auList.size(), 'should have 1 au record');
+    CustomerDetailCtrl.AuWrapper au = result.auList[0];
+    System.assertEquals('090-9999-8888', au.auTel, 'auTel mismatch');
+    System.assertEquals('iPhone 15', au.kishuMeisho, 'kishuMeisho mismatch');
+    System.assertEquals('スマートフォン', au.kishu, 'kishu mismatch');
+    System.assertEquals('使い放題MAX', au.ryokinPlan, 'ryokinPlan mismatch');
+    System.assertEquals('新規', au.keiyakuShubetsu, 'keiyakuShubetsu mismatch');
+    System.assertEquals(3000, au.keitaiKappuShiharaiGaku, 'kappuGaku mismatch');
+    System.assertEquals(24, au.keitaiKappuShiharaiKaisuu, 'kappuKaisuu mismatch');
+    System.assertEquals(36000, au.keitaiZansaiKingaku, 'zansai mismatch');
+    System.assertEquals('テスト太郎', au.keiyakushaMei, 'keiyakusha mismatch');
   }
 }
