@@ -610,6 +610,7 @@ public with sharing class CustomerDetailCtrl {
     Map<String, AuWrapper> kazokuAuMap = new Map<String, AuWrapper>();
     List<String> honninKeyOrder = new List<String>();
     List<String> kazokuKeyOrder = new List<String>();
+    Set<String> seenPhones = new Set<String>(); // 全カテゴリ共通の重複チェック
     String contactName = con.Name;
     for (au__c a : [
       SELECT Id, AuTel__c, KishuMeisho__c, Kishu__c,
@@ -624,29 +625,20 @@ public with sharing class CustomerDetailCtrl {
              ToyotaAuMembersTorokubi_Text__c
       FROM au__c
       WHERE ContactName__c = :contactId
-      ORDER BY KeitaiKonyubi__c DESC NULLS LAST
+      ORDER BY KeiyakuNoShubetsu__c ASC, KeitaiKonyubi__c DESC NULLS LAST
     ]) {
-      // 重複判定：携帯番号+端末購入日+機種名称+契約者
-      String dedupeKey = (a.AuTel__c != null ? a.AuTel__c : '') + '|'
-        + String.valueOf(a.KeitaiKonyubi__c) + '|'
-        + (a.KishuMeisho__c != null ? a.KishuMeisho__c : '') + '|'
-        + (a.KeiyakushameiKanji__c != null ? a.KeiyakushameiKanji__c : '');
+      // 重複判定：電話番号（本人→利用者→家族の順で処理、最初の出現を保持）
+      String dedupeKey = a.AuTel__c != null ? a.AuTel__c : '';
+      if (seenPhones.contains(dedupeKey)) {
+        continue; // 同一番号は本人優先で1件のみ
+      }
+      seenPhones.add(dedupeKey);
 
-      Boolean isHonnin = (contactName != null && a.KeiyakushameiKanji__c == contactName);
+      // KeiyakuNoShubetsu__c でタブ振り分け
+      String shubetsu = a.KeiyakuNoShubetsu__c != null ? a.KeiyakuNoShubetsu__c : '';
+      Boolean isHonnin = shubetsu.contains('本人');
       Map<String, AuWrapper> targetMap = isHonnin ? honninAuMap : kazokuAuMap;
       List<String> targetOrder = isHonnin ? honninKeyOrder : kazokuKeyOrder;
-
-      if (targetMap.containsKey(dedupeKey)) {
-        // 重複 → メンバーズ加入日が新しければ上書き
-        AuWrapper existing = targetMap.get(dedupeKey);
-        String existDate = existing.membersTorokubiText != null ? existing.membersTorokubiText : '';
-        String newDate = a.ToyotaAuMembersTorokubi_Text__c != null ? a.ToyotaAuMembersTorokubi_Text__c : '';
-        if (newDate > existDate) {
-          AuWrapper aw = buildAuWrapper(a);
-          targetMap.put(dedupeKey, aw);
-        }
-        continue;
-      }
 
       targetMap.put(dedupeKey, buildAuWrapper(a));
       targetOrder.add(dedupeKey);
