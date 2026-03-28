@@ -510,7 +510,15 @@ public with sharing class CustomerDetailCtrl {
     ];
 
     result.jafList = new List<JAFWrapper>();
+    Set<String> seenJafKaiin = new Set<String>();
     for (JAF__c j : jafList) {
+      // 会員番号で重複除外（ORDER BYにより最新が先頭）
+      String kaiinKey = j.KaiinNumber__c != null ? j.KaiinNumber__c : '';
+      if (seenJafKaiin.contains(kaiinKey)) {
+        continue;
+      }
+      seenJafKaiin.add(kaiinKey);
+
       JAFWrapper jw = new JAFWrapper();
       jw.id = j.Id;
       jw.kaiinNumber = j.KaiinNumber__c;
